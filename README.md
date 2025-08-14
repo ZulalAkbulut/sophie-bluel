@@ -9,3 +9,7 @@ Fonctionnalités principales :
 - Communication avec une API
 
 Outils : JavaScript, HTML, CSS, GitHub, Figma, Visual Studio Code.
+
+email: sophie.bluel@test.tld
+password: S0phie
+
