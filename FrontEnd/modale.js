@@ -1,187 +1,119 @@
-// GESTION DE LA HOME PAGE
-// >>> Generation des projets
+// ==================== MODALE.JS ====================
 
+// ----------- VARIABLES GLOBALES -----------
 const btnAll = document.querySelector(".filter__btn-id-null");
 const btnId1 = document.querySelector(".filter__btn-id-1");
 const btnId2 = document.querySelector(".filter__btn-id-2");
 const btnId3 = document.querySelector(".filter__btn-id-3");
+const modaleSectionProjets = document.querySelector(".js-admin-projets");
+const AlredyLogged = document.querySelector(".js-alredy-logged");
 
-const sectionProjets = document.querySelector(".gallery");
+// Global variables
+let worksData = []; 
+const sectionProjets = document.querySelector(".gallery"); // HTML’deki container
 
-// Reset la section projets
-function resetSectionProjets() {
+let modale = null;
+let modaleProjet = null;
+let token = localStorage.getItem("token"); // Admin token
+
+// ----------- GENERATION DES PROJETS -----------
+async function generationProjets(id = null, works = null) {
+ if (!sectionProjets) return;
+
+  if (!worksData.length && !works) {
+    try {
+      const response = await fetch("http://localhost:5678/api/works");
+      worksData = await response.json();
+    } catch {
+      // hata yönetimi
+    }
+  } else if (works) {
+    worksData = works;
+  }
+
+  // Reset la section
   sectionProjets.innerHTML = "";
+
+  // Filtre
+  let filtered = id && [1,2,3].includes(id)
+    ? worksData.filter(p => p.categoryId === id)
+    : worksData;
+
+  // Active les boutons
+  document.querySelectorAll(".filter__btn").forEach(btn => btn.classList.remove("filter__btn--active"));
+  if (id === null) {
+    document.querySelector(".filter__btn-id-null").classList.add("filter__btn--active");
+  } else if ([1,2,3].includes(id)) {
+    document.querySelector(`.filter__btn-id-${id}`).classList.add("filter__btn--active");
+  }
+
+  // Aucun projet
+  if (!filtered.length) {
+    sectionProjets.innerHTML = `<p class="error">
+      Aucun projet à afficher <br><br>Toutes nos excuses pour la gêne occasionnée
+    </p>`;
+    return;
+  }
+
+  // Génère les projets
+  filtered.forEach(p => {
+    const figure = document.createElement("figure");
+    figure.classList.add(`js-projet-${p.id}`);
+    
+    const img = document.createElement("img");
+    img.src = p.imageUrl;
+    img.alt = p.title;
+    figure.appendChild(img);
+
+    const figcaption = document.createElement("figcaption");
+    figcaption.textContent = p.title;
+    figure.appendChild(figcaption);
+
+    sectionProjets.appendChild(figure);
+  });
 }
 
-async function generationProjets(id = null) {
-  sectionProjets.innerHTML = ""; // Nettoyez d'abord les anciens projets
+window.generationProjets = generationProjets;
+
+// ----------- FILTER EVENT LISTENERS -----------
+btnAll?.addEventListener("click", () => generationProjets(null));
+btnId1?.addEventListener("click", () => generationProjets(1));
+btnId2?.addEventListener("click", () => generationProjets(2));
+btnId3?.addEventListener("click", () => generationProjets(3));
+
+// ----------- MODALE ADMIN & PANEL -----------
+async function modaleProjets() {
+  if (!modaleSectionProjets) return;
 
   try {
     const response = await fetch("http://localhost:5678/api/works");
-    let data = await response.json();
+    const dataAdmin = await response.json();
+    modaleSectionProjets.innerHTML = "";
 
-    // Filtre de catégorie
-    if (id) {
-      data = data.filter((item) => item.categoryId == id);
-    }
-
-    // Mettre à jour le style du bouton actif
-    document.querySelectorAll(".filter__btn").forEach((btn) => {
-      btn.classList.remove("filter__btn--active");
-    });
-    if (id === null) {
-      document.querySelector(".filter__btn-id-null").classList.add("filter__btn--active");
-    } else {
-      document.querySelector(`.filter__btn-id-${id}`).classList.add("filter__btn--active");
-    }
-
-    // Si aucune donnée, afficher un avertissement
-    if (!data || data.length === 0) {
-      const p = document.createElement("p");
-      p.classList.add("error");
-      p.innerHTML = "Aucun projet à afficher <br><br>Toutes nos excuses pour la gêne occasionnée";
-      sectionProjets.appendChild(p);
-      return;
-    }
-
-    // Créer des projets
-    data.forEach((item) => {
-      const figure = document.createElement("figure");
-      figure.classList.add(`js-projet-${item.id}`);
-      sectionProjets.appendChild(figure);
+    dataAdmin.forEach(item => {
+      const div = document.createElement("div");
+      div.classList.add("gallery__item-modale");
+      modaleSectionProjets.appendChild(div);
 
       const img = document.createElement("img");
       img.src = item.imageUrl;
       img.alt = item.title;
-      figure.appendChild(img);
+      div.appendChild(img);
 
-      const figcaption = document.createElement("figcaption");
-      figcaption.innerHTML = item.title;
-      figure.appendChild(figcaption);
+      const p = document.createElement("p");
+      p.classList.add(item.id, "js-delete-work");
+      div.appendChild(p);
+
+      const icon = document.createElement("i");
+      icon.classList.add("fa-solid", "fa-trash-can");
+      p.appendChild(icon);
     });
+
+    deleteWork();
   } catch (error) {
-    console.error("Erreur lors de l'importation des projets:", error);
-
-    const p = document.createElement("p");
-    p.classList.add("error");
-    p.innerHTML = "Une erreur est survenue lors de la récupération des projets<br><br>Une tentative de reconnexion automatique aura lieu dans une minute<br><br><br><br>Si le problème persiste, veuillez contacter l'administrateur du site";
-    sectionProjets.appendChild(p);
-
-    setTimeout(() => {
-      window.location.href = "index.html";
-    }, 60000);
+    console.log(error);
   }
 }
-
-// Charger tous les projets à l'ouverture de la page
-generationProjets();
-
-// >>> Filtres
-btnAll.addEventListener("click", () => generationProjets(null));
-btnId1.addEventListener("click", () => generationProjets(1));
-btnId2.addEventListener("click", () => generationProjets(2));
-btnId3.addEventListener("click", () => generationProjets(3));
-
-// >>> Gestion boite modale
-
-let modale = null;
-let dataAdmin;
-const modaleSectionProjets = document.querySelector(".js-admin-projets");
-
-// Reset la section projets
-function resetmodaleSectionProjets() {
-  modaleSectionProjets.innerHTML = "";
-}
-
-// Génère les projets dans la modale admin
-async function modaleProjets() {
-  const response = await fetch("http://localhost:5678/api/works");
-  dataAdmin = await response.json();
-  resetmodaleSectionProjets();
-
-  for (let i = 0; i < dataAdmin.length; i++) {
-    const div = document.createElement("div");
-    div.classList.add("gallery__item-modale");
-    modaleSectionProjets.appendChild(div);
-
-    const img = document.createElement("img");
-    img.src = dataAdmin[i].imageUrl;
-    img.alt = dataAdmin[i].title;
-    div.appendChild(img);
-
-    const p = document.createElement("p");
-    div.appendChild(p);
-    p.classList.add(dataAdmin[i].id, "js-delete-work");
-
-    const icon = document.createElement("i");
-    icon.classList.add("fa-solid", "fa-trash-can");
-    p.appendChild(icon);
-  }
-  deleteWork();
-}
-
-// Ouverture de la modale
-const openModale = async function (e) {
-  e.preventDefault();
-  modale = document.querySelector(e.target.getAttribute("href"));
-  if (!modale) return;
-
-  // Projeleri yüklemeden modal açma
-  await modaleProjets();
-
-  modale.style.display = "block";
-  modale.removeAttribute("aria-hidden");
-  modale.setAttribute("aria-modal", "true");
-
-  const filters = document.querySelector(".filters");
-  if (filters) filters.style.display = "none";
-
-  modale.querySelector(".js-modale-close").addEventListener("click", closeModale);
-  modale.addEventListener("click", closeModale);
-  modale.querySelector(".js-modale-stop").addEventListener("click", stopPropagation);
-
-  document.querySelectorAll(".js-modale-projet").forEach((a) => {
-    a.addEventListener("click", openModaleProjet);
-  });
-};
-
-// Ferme la modale
-const closeModale = function (e) {
-  e.preventDefault();
-  if (!modale) return;
-
-  modale.setAttribute("aria-hidden", "true");
-  modale.removeAttribute("aria-modal");
-
-  modale.querySelector(".js-modale-close").removeEventListener("click", closeModale);
-
-  setTimeout(() => {
-    modale.style.display = "none";
-    modale = null;
-    resetmodaleSectionProjets();
-
-    const filters = document.querySelector(".filters");
-    if (filters) filters.style.display = "flex";
-  }, 300);
-};
-
-const stopPropagation = function (e) {
-  e.stopPropagation();
-};
-
-document.querySelectorAll(".js-modale").forEach((a) => a.addEventListener("click", openModale));
-
-window.addEventListener("keydown", function (e) {
-  if (e.key === "Escape" || e.key === "Esc") {
-    closeModale(e);
-    closeModaleProjet(e);
-  }
-});
-
-// >>> Gestion token login
-const token = localStorage.getItem("token");
-const AlredyLogged = document.querySelector(".js-alredy-logged");
-adminPanel();
 
 function adminPanel() {
   if (!token) return;
@@ -197,14 +129,66 @@ function adminPanel() {
     adminRod.removeAttribute("aria-hidden");
   }
 
-  AlredyLogged.innerHTML = "logout";
+  AlredyLogged.textContent = "logout";
   document.body.classList.add("mode-active");
 
   const filters = document.querySelector(".filters");
   if (filters) filters.style.display = "none";
 }
 
-// >>> Gestion suppression d'un projet
+adminPanel();
+
+// ----------- MODALE OPEN/CLOSE -----------
+const openModale = async function (e) {
+  e.preventDefault();
+  modale = document.querySelector(e.target.getAttribute("href"));
+  if (!modale) return;
+
+  await modaleProjets();
+
+  modale.style.display = "block";
+  modale.removeAttribute("aria-hidden");
+  modale.setAttribute("aria-modal", "true");
+
+  const filters = document.querySelector(".filters");
+  if (filters) filters.style.display = "none";
+
+  modale.querySelector(".js-modale-close").addEventListener("click", closeModale);
+  modale.addEventListener("click", closeModale);
+  modale.querySelector(".js-modale-stop").addEventListener("click", stopPropagation);
+
+  document.querySelectorAll(".js-modale-projet").forEach((a) => a.addEventListener("click", openModaleProjet));
+};
+
+const closeModale = function (e) {
+  e.preventDefault();
+  if (!modale) return;
+
+  modale.setAttribute("aria-hidden", "true");
+  modale.removeAttribute("aria-modal");
+  modale.querySelector(".js-modale-close").removeEventListener("click", closeModale);
+
+  setTimeout(() => {
+    modale.style.display = "none";
+    modale = null;
+    modaleSectionProjets.innerHTML = "";
+
+    const filters = document.querySelector(".filters");
+    if (filters) filters.style.display = "flex";
+  }, 300);
+};
+
+const stopPropagation = function (e) { e.stopPropagation(); };
+
+document.querySelectorAll(".js-modale").forEach((a) => a.addEventListener("click", openModale));
+window.addEventListener("keydown", function (e) {
+  if (e.key === "Escape" || e.key === "Esc") {
+    closeModale(e);
+    closeModaleProjet(e);
+  }
+});
+
+// ----------- DELETE PROJETS -----------
 function deleteWork() {
   const btnDelete = document.querySelectorAll(".js-delete-work");
   btnDelete.forEach((btn) => btn.addEventListener("click", deleteProjets));
@@ -212,7 +196,6 @@ function deleteWork() {
 
 async function deleteProjets() {
   const workId = this.classList[0];
-
   try {
     const response = await fetch(`http://localhost:5678/api/works/${workId}`, {
       method: "DELETE",
@@ -231,18 +214,16 @@ async function deleteProjets() {
 }
 
 async function refreshPage(i) {
-  await modaleProjets(); // Relancer la génération modale
-
+  await modaleProjets();
   const projet = document.querySelector(`.js-projet-${i}`);
   if (projet) projet.style.display = "none";
 }
 
-// >>> Gestion boite modale ajout projet
-
-let modaleProjet = null;
+// ----------- MODALE AJOUT PROJET -----------
 const openModaleProjet = function (e) {
   e.preventDefault();
   modaleProjet = document.querySelector(e.target.getAttribute("href"));
+  if (!modaleProjet) return;
 
   modaleProjet.style.display = "block";
   modaleProjet.removeAttribute("aria-hidden");
@@ -272,3 +253,8 @@ const closeModaleProjet = function (e) {
     modaleProjet = null;
   }, 300);
 };
+
+// ----------- CHARGEMENT INITIAL -----------
+document.addEventListener("DOMContentLoaded", () => {
+  generationProjets();
+});
