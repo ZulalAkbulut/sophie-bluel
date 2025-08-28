@@ -58,13 +58,8 @@ function updateAuthLink() {
 
 // Fonction de déconnexion
 function logout() {
-  localStorage.removeItem("token"); // Supprimer le token
-  updateAuthLink(); // Mettre à jour le header
-  if (!window.location.pathname.includes("login.html")) {
-    window.location.href = "login.html"; // Rediriger vers login si on n'y est pas déjà
-  } else {
-    alredyLoggedError.innerHTML = ""; // Supprimer le message sur login.html
-  }
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
 }
 
 // Fonction de connexion
