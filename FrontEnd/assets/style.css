@@ -424,7 +424,7 @@ footer nav ul {
 	border: none;
 	background-color: grey;
 	color: white;
-	cursor: not-allowed;
+	cursor: pointer;
 	border: none;
 	padding: 10px 30px;
 	border-radius: 20px;
@@ -435,7 +435,7 @@ footer nav ul {
 .js-add-work:disabled {
 	background-color: #ccc;
 	color: #666;
-	cursor: not-allowed;
+	cursor: pointer;
 }
 
 .js-add-work.active {

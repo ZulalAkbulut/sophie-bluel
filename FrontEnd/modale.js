@@ -83,6 +83,17 @@ async function generationCategories() {
     filterContainer.appendChild(btn);
   });
 
+    // --------- SELECT (form ajout projet) ----------
+  if (selectCategory) {
+    selectCategory.innerHTML = ""; 
+    categoriesData.forEach((cat) => {
+      const option = document.createElement("option");
+      option.value = cat.id;
+      option.textContent = cat.name;
+      selectCategory.appendChild(option);
+    });
+  }
+
   generationProjets();
 }
 
