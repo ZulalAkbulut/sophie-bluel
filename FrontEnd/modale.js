@@ -84,17 +84,36 @@ async function generationCategories() {
   });
 
     // --------- SELECT (form ajout projet) ----------
-  if (selectCategory) {
-    selectCategory.innerHTML = ""; 
+  const selectCategory = document.querySelector("#categorie"); // saisir l'élément sélectionné
+  if (!selectCategory) return;
+
+  try {
+    // Récupérer les catégories à partir de l'API
+    const response = await fetch("http://localhost:5678/api/categories");
+    if (!response.ok) throw new Error("Erreur API");
+    const categoriesData = await response.json();
+
+    console.log("✅ Categories reçues depuis l'API :", categoriesData);
+
+    // Décochez la case Sélectionner
+    selectCategory.innerHTML = "";
+
+    // Ajouter une option de manière dynamique
     categoriesData.forEach((cat) => {
       const option = document.createElement("option");
       option.value = cat.id;
       option.textContent = cat.name;
       selectCategory.appendChild(option);
-    });
-  }
 
-  generationProjets();
+      console.log(`Option ajoutée → id: ${cat.id}, name: ${cat.name}`);
+    });
+
+    // Enregistrez la version finale de Select
+    console.log("📌 Select final :", selectCategory.innerHTML);
+
+  } catch (err) {
+    console.error("Erreur lors du chargement des catégories :", err);
+  }
 }
 
 // ----------- GENERATION DES PROJETS -----------
